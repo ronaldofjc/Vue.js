@@ -1,17 +1,22 @@
 import Vue from 'vue'
 import App from './App.vue'
+
 import VueRouter from 'vue-router'
+import VueResource from 'vue-resource'
+
 import HelloWorldRouter from './components/HelloWorldRouter.vue'
 import Buttons from './components/Buttons.vue'
 import Card from './components/Card.vue'
 
+Vue.use(VueResource)
 Vue.use(VueRouter)
+
 const router = new VueRouter({
   linkActiveClass: 'active'
 })
 //A configuração do vue-router é feita pelo router.map
 router.map({
-  '/foo': {
+  '/': {
     component: HelloWorldRouter,
   },
   '/card': {
