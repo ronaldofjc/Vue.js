@@ -10,7 +10,7 @@ var secretKey = "MySuperSecretKey";
 //Database in the cloud
 var mongoose = require('mongoose');
 //conecta no banco de dados do serviço mongolab
-mongoose.connect('mongodb://root:123456@ds015700.mlab.com:15700/blog', function(err){
+mongoose.connect('mongodb://<root>:<123456>@ds015700.mlab.com:15700/blog', function(err){
   if (err) {
     console.error("error! " + err)
   }
@@ -87,4 +87,87 @@ router.route('/users').get(auth, function(req, res){
   })
 });
 
-//parei na página 114
+//funcionalidade para o login, acessado pela url /login
+router.route('/login').post(function(req, res){ //cliente faz a requisição via post
+  if(req.body.isNew){
+    //método findOne para verificar se o login que o usuário preencher existe
+    User.findOne({ login: req.body.login }, 'name').exec(function(err, user){
+      if(err)
+        res.send(err);
+      if(user != null){
+        res.status(400).send('Login Existente');
+      }
+      else {
+        var newUser = new User();
+        newUser.name = req.body.name;
+        newUser.login = req.body.login;
+        newUser.password = req.body.password;
+        newUser.save(function(err){
+          if(err)
+            res.send(err);
+          var token = jwt.sign(newUser, secretKey, {
+            expiresIn: "1 day"
+          });
+          res.json({user: newUser, token: token});
+        });
+      }
+    });
+  // se req.body.isNew for falso
+  } else {
+      User.findOne({login: req.body.login,
+        password: req.body.password}, 'name').exec(function(err, user){
+          if(err)
+            res.send(err);
+          if(user != null){
+            //criação do token de autenticação do usuário
+            var token = jwt.sign(user, secretKey, {
+              expiresIn: "1 day"
+            });
+            res.json({user: user, token: token});
+          } else {
+            res.status(400).send('Login/Senha incorretos');
+          }
+        });
+    }
+});
+//posts/:post_id? para determinar a url para obtenção de posts
+//O uso do :post_id adiciona uma variável a url, por exemplo /posts/5
+router.route('/posts/:post_id?').get(function(req, res){
+  Post
+    .find()
+    .sort([['date', 'descending']]) //método sort para ordenar os posts
+    .populate('user', 'name') //método populate para adicionar uma referencia ao modelo user
+    .exec(function(err, posts){
+      if(err)
+        res.send(err);
+      res.json(posts);
+    });
+})
+  .post(auth, function(req, res){ //método para adicionar um Post
+    var post = new Post();
+    post.title = req.body.title;
+    post.text = req.body.text;
+    post.user = req.body.user._id;
+    if(post.title==null)
+      res.status(400).send('Título não pode ser nulo');
+    post.save(function(err){ //Salvar o post no banco de dados
+      if(err)
+        res.send(err);
+      res.json(post);
+    });
+  })
+    .delete(auth, function(req, res){ //método onde o post é apagado do banco
+      Post.remove({
+        _id: req.params.post_id //veio da url /posts/:post_id?
+      }, function(err, post){
+        if(err)
+          res.send(err);
+        res.json({message: 'Successfully deleted'});
+      });
+    });
+//register router
+app.use('/api', router); //apontando a variável router para o endereço /api
+//start server
+var port = process.env.PORT || 8080; //porta em que o servidor express estará escutando
+app.listen(port);
+console.log('Listen: ' + port); //informa qual a porta foi escolhida
