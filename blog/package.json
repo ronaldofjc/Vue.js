@@ -2,7 +2,7 @@
   "name": "blog",
   "description": "A simple blog",
   "version": "1.0.0",
-  "author": "Daniel Schmitz <danieljfa@gmail.com>",
+  "author": "Ronaldo Feitosa <ronaldofjc@hotmail.com>",
   "scripts": {
     "watchify": "watchify -vd -p browserify-hmr -e src/main.js -o dist/build.js",
     "serve": "nodemon server.js",
