@@ -6,7 +6,7 @@
       <div class="column is-5">
         <p class="control has-addons">
           <input class="input is-expanded" type="text" placeholder="Procure pelo nome" v-model="search">
-          <a class="button is-info" @click="searchBreweries">Search</a>
+          <a class="button is-info" @click.prevent="searchBreweries">Search</a>
         </p>
       </div>
       <div class="column is-5">
@@ -92,8 +92,14 @@
 
         let start = (this.page * this.itensPerPage) - (this.itensPerPage - 1)
         let end = this.page * this.itensPerPage
+        let qString = "";
 
-        this.$http.get(`/breweries?_start=${start}&_end=${end}`).then(
+        if(this.search){
+          //Insere o qString somente se o this.search estiver preenchido
+          qString = `&q=${this.search}`
+        }
+
+        this.$http.get(`/breweries?_start=${start}&_end=${end}${qString}`).then(
          response=>{
            t.breweries = response.json()
            t.total = response.headers['X-Total-Count']
@@ -106,7 +112,7 @@
 
        },
        searchBreweries(){
-
+         this.loadBreweries()
        }
      },
      created(){
